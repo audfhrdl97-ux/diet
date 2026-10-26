@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="다이어트">
+<meta name="theme-color" content="#3b82f6">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>우리 가족 다이어트 매니저</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--main:#3b82f6;--soft:#eff6ff;color-scheme:light;box-sizing:border-box}
+body.wife{--main:#ec4899;--soft:#fdf2f8}
+html,body{height:100%;margin:0}
+body{font-family:-apple-system,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;background:#f3f4f6;color:#1f2937;-webkit-tap-highlight-color:transparent}
+.bg-main{background:var(--main)}.text-main{color:var(--main)}.bg-soft{background:var(--soft)}
+.grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;padding-top:4px;cursor:pointer;border:1px solid transparent}
+.day.sel{background:var(--soft);border-color:var(--main);font-weight:700}
+.card{background:#fff;border-radius:12px;padding:16px;border:1px solid #f3f4f6;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.inp{width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;background:#fff}
+.btn{width:100%;color:#fff;font-weight:700;padding:12px;border-radius:8px;background:var(--main)}
+</style>
+</head>
+<body>
+<div class="max-w-md mx-auto h-full flex flex-col bg-gray-50 relative shadow-2xl overflow-hidden">
+  <header class="bg-main text-white px-4 pb-4 flex justify-between items-center shadow-md" style="padding-top:calc(env(safe-area-inset-top,0px) + 1rem)">
+    <h1 class="text-lg font-bold">🌿 다이어트 매니저</h1>
+    <div class="bg-black/20 rounded-full p-1 flex text-xs font-bold">
+      <button id="m-husband" onclick="setMember('husband')" class="px-3 py-1 rounded-full">남편</button>
+      <button id="m-wife" onclick="setMember('wife')" class="px-3 py-1 rounded-full">아내</button>
+    </div>
+  </header>
+
+  <main class="flex-1 overflow-y-auto p-4 pb-24">
+    <section id="v-dashboard" class="space-y-4">
+      <div class="card">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-lg">📋 인바디 및 목표</h2>
+          <button onclick="openProfile()" class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full">✏️ 기록 수정</button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2 bg-soft p-4 rounded-xl flex justify-between items-center">
+            <div><p class="text-xs text-main font-medium">현재 체중</p><p class="text-2xl font-bold"><span id="d-w">-</span> <span class="text-sm font-normal">kg</span></p></div>
+            <div class="text-right"><p class="text-xs text-gray-500">목표 체중</p><p class="text-lg font-bold text-gray-700"><span id="d-t">-</span> <span class="text-xs font-normal">kg</span></p></div>
+          </div>
+          <div class="bg-orange-50 p-3 rounded-lg text-center"><p class="text-xs text-orange-600">골격근량</p><p class="font-semibold text-orange-800"><span id="d-m">-</span> kg</p></div>
+          <div class="bg-red-50 p-3 rounded-lg text-center"><p class="text-xs text-red-600">체지방량</p><p class="font-semibold text-red-800"><span id="d-f">-</span> kg</p></div>
+          <div class="bg-teal-50 p-3 rounded-lg text-center"><p class="text-xs text-teal-600">BMI</p><p class="font-semibold text-teal-800" id="d-bmi">-</p></div>
+          <div class="bg-purple-50 p-3 rounded-lg text-center"><p class="text-xs text-purple-600">체지방률</p><p class="font-semibold text-purple-800"><span id="d-fp">-</span> %</p></div>
+        </div>
+      </div>
+      <div class="card space-y-3">
+        <h2 class="font-bold text-gray-700">오늘의 칼로리 요약</h2>
+        <div onclick="openAdd('food')" class="flex items-center justify-between p-3 bg-blue-50 rounded-lg cursor-pointer">
+          <div><p class="text-xs font-bold text-blue-800">🍽️ 섭취 (식단)</p><p class="text-[10px] text-blue-600">터치하여 식단 기록</p></div>
+          <span class="text-lg font-bold text-blue-600" id="d-in">0 kcal</span>
+        </div>
+        <div onclick="openAdd('exercise')" class="flex items-center justify-between p-3 bg-orange-50 rounded-lg cursor-pointer">
+          <div><p class="text-xs font-bold text-orange-800">🏋️ 소모 (운동)</p><p class="text-[10px] text-orange-600">터치하여 운동 기록</p></div>
+          <span class="text-lg font-bold text-orange-600" id="d-out">0 kcal</span>
+        </div>
+        <div class="pt-2 border-t flex justify-between items-center">
+          <span class="text-sm text-gray-500">순수 칼로리 (섭취-소모)</span><span class="text-xl font-bold" id="d-net">0 kcal</span>
+        </div>
+      </div>
+      <div class="card"><h2 class="font-bold text-gray-700 mb-3">오늘의 상세 기록</h2><div id="today-logs" class="space-y-2"></div></div>
+    </section>
+
+    <section id="v-calendar" class="hidden space-y-4">
+      <div class="card">
+        <div class="flex justify-between items-center mb-4">
+          <button onclick="chMonth(-1)" class="p-2 text-gray-500">◀</button>
+          <h2 class="font-bold text-lg" id="cal-title"></h2>
+          <button onclick="chMonth(1)" class="p-2 text-gray-500">▶</button>
+        </div>
+        <div class="grid7 text-center text-xs text-gray-500 mb-2"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+        <div id="cal-days" class="grid7 text-sm mb-4"></div>
+        <div class="pt-3 border-t text-xs text-gray-500 space-y-1">
+          <div class="flex justify-end gap-3"><b class="text-blue-600">👨 남편:</b><span>● 운동</span><span>○ 식단</span></div>
+          <div class="flex justify-end gap-3"><b class="text-pink-500">👩 아내:</b><span>● 운동</span><span>○ 식단</span></div>
+        </div>
+      </div>
+      <div class="card"><h3 class="font-bold text-gray-700 mb-3"><span id="sel-title"></span> 상세 기록</h3>
+        <div class="flex gap-2 mb-3">
+          <button onclick="openAdd('food',fmt(sel))" class="flex-1 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-bold">🍽️ 식단 추가</button>
+          <button onclick="openAdd('exercise',fmt(sel))" class="flex-1 py-2 rounded-lg bg-orange-50 text-orange-700 text-sm font-bold">🏋️ 운동 추가</button>
+        </div>
+        <div id="sel-logs" class="space-y-2"></div></div>
+    </section>
+
+    <section id="v-trends" class="hidden">
+      <div class="card">
+        <h2 class="font-bold text-gray-700 mb-4"><span id="tr-name">남편</span>의 신체 변화 추이</h2>
+        <div class="relative h-64 w-full"><canvas id="chart"></canvas></div>
+        <div id="chart-btns" class="mt-5 flex justify-center flex-wrap gap-2 text-xs"></div>
+        <p class="text-center text-[10px] text-gray-400 mt-3">신체 정보를 저장할 때마다 날짜별로 누적 기록됩니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bg-white border-t absolute bottom-0 w-full flex justify-around items-center z-20 px-2" style="height:calc(4rem + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px)">
+    <button onclick="setTab('dashboard')" id="t-dashboard" class="flex flex-col items-center w-full text-main"><span class="text-xl">📊</span><span class="text-[10px]">대시보드</span></button>
+    <button onclick="setTab('calendar')" id="t-calendar" class="flex flex-col items-center w-full text-gray-400"><span class="text-xl">📅</span><span class="text-[10px]">달력</span></button>
+    <button onclick="openAdd('food')" class="flex flex-col items-center w-full relative text-gray-400">
+      <span class="absolute -top-7 bg-main text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-4 border-white text-2xl">＋</span><span class="text-[10px] mt-6">기록하기</span>
+    </button>
+    <button onclick="setTab('trends')" id="t-trends" class="flex flex-col items-center w-full text-gray-400"><span class="text-xl">📈</span><span class="text-[10px]">추이</span></button>
+  </nav>
+
+  <!-- 신체 정보 모달 -->
+  <div id="profile-modal" class="hidden absolute inset-0 bg-black/50 z-30 flex items-end">
+    <div class="bg-white w-full rounded-t-2xl p-5 max-h-[90%] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold"><span id="pm-name">남편</span> 신체 정보 업데이트</h3><button onclick="closeModals()" class="text-gray-400 text-xl px-2">✕</button></div>
+      <form id="profile-form" class="space-y-4">
+        <div><label class="block text-sm font-medium mb-1">측정 날짜</label><input type="date" id="p-date" class="inp" required></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium mb-1">현재 몸무게 (kg)</label><input type="number" step="0.1" id="p-w" class="inp" required></div>
+          <div><label class="block text-sm font-medium mb-1">목표 몸무게 (kg)</label><input type="number" step="0.1" id="p-t" class="inp" required></div>
+          <div><label class="block text-sm font-medium mb-1">골격근량 (kg)</label><input type="number" step="0.1" id="p-m" class="inp" required></div>
+          <div><label class="block text-sm font-medium mb-1">체지방량 (kg)</label><input type="number" step="0.1" id="p-f" class="inp" required></div>
+        </div>
+        <button type="submit" class="btn">저장 및 차트 업데이트</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 기록 추가 모달 -->
+  <div id="add-modal" class="hidden absolute inset-0 bg-black/50 z-30 flex items-end">
+    <div class="bg-white w-full rounded-t-2xl p-5 max-h-[90%] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">기록 추가</h3><button onclick="closeModals()" class="text-gray-400 text-xl px-2">✕</button></div>
+      <div class="flex gap-3 mb-4">
+        <label class="flex-1 cursor-pointer"><input type="radio" name="who" value="husband" class="peer sr-only" onchange="exPreview()"><div class="text-center py-2 rounded-lg border bg-gray-50 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 text-sm font-bold">👨 남편</div></label>
+        <label class="flex-1 cursor-pointer"><input type="radio" name="who" value="wife" class="peer sr-only" onchange="exPreview()"><div class="text-center py-2 rounded-lg border bg-gray-50 peer-checked:bg-pink-50 peer-checked:border-pink-500 peer-checked:text-pink-700 text-sm font-bold">👩 아내</div></label>
+      </div>
+      <div class="flex bg-gray-100 rounded-lg p-1 mb-4">
+        <button id="tg-food" onclick="setType('food')" class="flex-1 py-2 text-sm font-bold rounded-md">식단 (섭취)</button>
+        <button id="tg-exercise" onclick="setType('exercise')" class="flex-1 py-2 text-sm font-bold rounded-md">운동 (소모)</button>
+      </div>
+      <form id="log-form" class="space-y-4">
+        <div><label class="block text-sm font-medium mb-1">날짜</label><input type="date" id="l-date" class="inp" required></div>
+        <div id="food-box" class="space-y-4">
+          <select id="food-sel" onchange="foodPreview()" class="inp"></select>
+          <div id="food-custom" class="hidden space-y-3 bg-blue-50 p-3 rounded-lg">
+            <input type="text" id="f-name" class="inp" placeholder="음식 이름 (예: 삼겹살)">
+            <input type="number" id="f-kcal" oninput="foodPreview()" class="inp" placeholder="섭취 칼로리 (kcal)">
+          </div>
+          <div class="text-right text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-lg">섭취 예상: <span id="f-prev" class="text-xl">0</span> kcal</div>
+        </div>
+        <div id="ex-box" class="hidden space-y-4">
+          <select id="ex-sel" onchange="exPreview()" class="inp"></select>
+          <div id="ex-custom" class="hidden space-y-3 bg-orange-50 p-3 rounded-lg">
+            <input type="text" id="x-name" class="inp" placeholder="운동 이름 (예: 클라이밍)">
+            <input type="number" step="0.1" id="x-met" oninput="exPreview()" class="inp" placeholder="MET 값 (예: 6.0)">
+            <p class="text-[11px] text-orange-700">MET는 운동 강도입니다. 가벼운 운동 2~3, 보통 4~6, 격한 운동 7 이상을 참고하세요.</p>
+          </div>
+          <input type="number" id="ex-dur" oninput="exPreview()" class="inp" placeholder="운동 시간 (분)" value="60">
+          <p class="bg-orange-50 text-orange-800 text-xs p-3 rounded-lg">선택한 대상의 <b>체중 × MET × 시간</b> 공식으로 소모 칼로리를 계산합니다.</p>
+          <div class="text-right text-sm font-bold text-orange-600 bg-orange-50 p-3 rounded-lg">소모 예상: <span id="e-prev" class="text-xl">0</span> kcal</div>
+        </div>
+        <button type="submit" class="btn">기록 저장하기</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden absolute top-20 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-5 py-3 rounded-xl shadow-lg z-50 whitespace-nowrap text-sm"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const FOODS=[['단백질 쉐이크',150],['일반식/백반',600],['들기름 두부 구이',300],['두부 계란찜',250],['두부 스크램블 에그',300],['초당 순두부 계란탕',200],['닭가슴살 샐러드',200],['연두부 1팩',150],['바나나 1개',105],['구운 계란 1개',70],['훈제란 1개',70],['아메리카노',10]];
+const EX=[['테니스',7.3],['달리기 / 조깅',7.0],['빠르게 걷기 / 파워워킹',4.3],['산책 (느리게)',2.8],['등산',6.0],['자전거',8.0],['실내 자전거',7.0],['수영',6.0],['줄넘기',10.0],['계단 오르기',8.8],['HIIT',8.0],['웨이트 트레이닝',3.5],['스쿼트',5.0],['런지 / 푸시업',3.8],['플랭크 / 코어',3.0],['요가',2.5],['필라테스',3.0],['스트레칭',2.3],['배드민턴',5.5],['탁구',4.0],['축구',7.0],['농구',6.5],['골프',4.8],['볼링',3.0],['에어로빅 / 댄스',6.5],['훌라후프',4.0]];
+const CH={weight:'체중',muscle:'골격근',fat:'체지방',bmi:'BMI','fat-percent':'체지방률'};
+let member='husband',logType='food',chartType='weight',sel=new Date(),calM=new Date(),chart=null,db=null,logs=[];
+const profiles={husband:{height:171,currentWeight:82,targetWeight:75,muscle:35,fat:20,history:[]},wife:{height:163,currentWeight:60,targetWeight:55,muscle:22,fat:18,history:[]}};
+const nm=m=>m==='husband'?'남편':'아내';
+
+/* ---------- 저장소: 공유 db 우선, 없으면 이 기기(localStorage) ---------- */
+function lsSave(){try{localStorage.setItem('diet-v1',JSON.stringify({profiles,logs}))}catch(e){}}
+function lsLoad(){try{const s=JSON.parse(localStorage.getItem('diet-v1')||'null');if(s){Object.assign(profiles,s.profiles);logs=s.logs||[]}}catch(e){}}
+async function saveProfileDoc(m,p){profiles[m]=p;if(db)await db.doc('profiles/'+m).set(p);else{lsSave();refreshAll()}}
+async function addLogDoc(l){if(db)await db.collection('logs').add(l);else{l.id='l'+Date.now();logs.push(l);lsSave();refreshAll()}}
+async function deleteLog(id){try{if(db)await db.doc('logs/'+id).delete();else{logs=logs.filter(l=>l.id!==id);lsSave();refreshAll()}toast('삭제 완료')}catch(e){toast('삭제 실패')}}
+
+/* ---------- 공통 UI ---------- */
+function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hidden'),2500)}
+function setMember(m){
+  member=m;document.body.className=m;
+  $('m-husband').className='px-3 py-1 rounded-full '+(m==='husband'?'bg-white text-blue-600 shadow-sm':'text-white');
+  $('m-wife').className='px-3 py-1 rounded-full '+(m==='wife'?'bg-white text-pink-600 shadow-sm':'text-white');
+  $('tr-name').textContent=$('pm-name').textContent=nm(m);
+  refreshAll();
+}
+function setTab(t){
+  ['dashboard','calendar','trends'].forEach(x=>{$('v-'+x).classList.toggle('hidden',x!==t);$('t-'+x).className='flex flex-col items-center w-full '+(x===t?'text-main':'text-gray-400')});
+  if(t==='trends')renderChart();
+}
+function bmiOf(w,h){return w&&h?(w/((h/100)**2)).toFixed(1):'-'}
+function fpOf(f,w){return f&&w?((f/w)*100).toFixed(1):'-'}
+
+function renderProfile(){
+  const p=profiles[member];
+  $('d-w').textContent=p.currentWeight||'-';$('d-t').textContent=p.targetWeight||'-';
+  $('d-m').textContent=p.muscle||'-';$('d-f').textContent=p.fat||'-';
+  $('d-bmi').textContent=bmiOf(p.currentWeight,p.height);$('d-fp').textContent=fpOf(p.fat,p.currentWeight);
+}
+function logRow(l,tag){
+  const f=l.type==='food';
+  return `<div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+    <div class="flex items-center text-sm font-medium text-gray-700">${tag?`<span class="text-[10px] px-2 py-0.5 rounded-full mr-2 ${l.member==='husband'?'bg-blue-100 text-blue-700':'bg-pink-100 text-pink-700'}">${nm(l.member)}</span>`:''}${f?'🍽️':'🏋️'}&nbsp;${esc(l.name)}${f?'':`<span class="text-xs text-gray-400 ml-2">(${esc(l.duration)}분)</span>`}</div>
+    <div class="flex items-center"><span class="text-sm font-bold ${f?'text-blue-600':'text-orange-600'}">${Number(l.calories)||0} kcal</span><button data-del="${esc(l.id)}" class="ml-3 text-gray-300">✕</button></div></div>`;
+}
+function renderToday(){
+  const t=fmt(new Date()),ls=logs.filter(l=>l.date===t&&l.member===member).sort((a,b)=>b.timestamp-a.timestamp);
+  let inn=0,out=0;ls.forEach(l=>l.type==='food'?inn+=l.calories:out+=l.calories);
+  $('today-logs').innerHTML=ls.length?ls.map(l=>logRow(l,false)).join(''):'<div class="text-center text-gray-400 text-sm py-4">기록이 없습니다.</div>';
+  $('d-in').textContent=inn+' kcal';$('d-out').textContent=out+' kcal';$('d-net').textContent=(inn-out)+' kcal';
+}
+function renderCal(){
+  const y=calM.getFullYear(),m=calM.getMonth();
+  $('cal-title').textContent=`${y}년 ${m+1}월`;
+  const first=new Date(y,m,1).getDay(),n=new Date(y,m+1,0).getDate(),map={};
+  logs.forEach(l=>{(map[l.date]??={})[l.member+l.type]=1});
+  const today=fmt(new Date()),selS=fmt(sel);let h='<div></div>'.repeat(first);
+  for(let i=1;i<=n;i++){
+    const d=fmt(new Date(y,m,i)),k=map[d]||{};
+    h+=`<div class="day ${d===selS?'sel':''}" data-d="${d}"><span class="${d===today?'bg-main text-white rounded-full w-6 h-6 flex items-center justify-center font-bold':'text-gray-700'}">${i}</span>
+    <div class="flex gap-1 mt-1">${k.husbandexercise?'<i class="w-1.5 h-1.5 rounded-full bg-blue-500"></i>':''}${k.husbandfood?'<i class="w-1.5 h-1.5 rounded-full border-2 border-blue-400"></i>':''}${k.wifeexercise?'<i class="w-1.5 h-1.5 rounded-full bg-pink-500"></i>':''}${k.wifefood?'<i class="w-1.5 h-1.5 rounded-full border-2 border-pink-400"></i>':''}</div></div>`;
+  }
+  $('cal-days').innerHTML=h;
+}
+function renderSel(){
+  $('sel-title').textContent=`${sel.getMonth()+1}월 ${sel.getDate()}일`;
+  const ls=logs.filter(l=>l.date===fmt(sel)).sort((a,b)=>b.timestamp-a.timestamp);
+  $('sel-logs').innerHTML=ls.length?ls.map(l=>logRow(l,true)).join(''):'<div class="text-center text-gray-400 text-sm py-4">기록이 없습니다.</div>';
+}
+function renderChart(){
+  if(!window.Chart||$('v-trends').classList.contains('hidden'))return;
+  $('chart-btns').innerHTML=Object.entries(CH).map(([k,v])=>`<button data-ct="${k}" class="px-4 py-1.5 rounded-full ${k===chartType?'bg-main text-white font-bold':'bg-gray-100 text-gray-600'}">${v}</button>`).join('');
+  const p=profiles[member];let hist=[...(p.history||[])].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(!hist.length)hist=[{date:fmt(new Date()),weight:p.currentWeight,muscle:p.muscle,fat:p.fat}];
+  const g={weight:h=>h.weight,muscle:h=>h.muscle,fat:h=>h.fat,bmi:h=>bmiOf(h.weight,p.height),'fat-percent':h=>fpOf(h.fat,h.weight)}[chartType];
+  const col=getComputedStyle(document.body).getPropertyValue('--main').trim()||'#3b82f6';
+  if(chart)chart.destroy();
+  chart=new Chart($('chart'),{type:'line',data:{labels:hist.map(h=>h.date.slice(5).replace('-','/')),datasets:[{label:CH[chartType],data:hist.map(g),borderColor:col,backgroundColor:col+'33',fill:true,tension:.4,pointBackgroundColor:'#fff',pointBorderColor:col,pointBorderWidth:2,pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:false},x:{grid:{display:false}}}}});
+}
+function refreshAll(){renderProfile();renderToday();renderCal();renderSel();renderChart()}
+function chMonth(d){calM=new Date(calM.getFullYear(),calM.getMonth()+d,1);renderCal()}
+
+/* ---------- 모달 ---------- */
+function closeModals(){$('profile-modal').classList.add('hidden');$('add-modal').classList.add('hidden')}
+function openProfile(){
+  const p=profiles[member];$('p-date').value=fmt(new Date());
+  $('p-w').value=p.currentWeight||'';$('p-t').value=p.targetWeight||'';$('p-m').value=p.muscle||'';$('p-f').value=p.fat||'';
+  $('profile-modal').classList.remove('hidden');
+}
+function openAdd(t,d){
+  document.querySelector(`input[name=who][value=${member}]`).checked=true;
+  $('l-date').value=d||fmt(new Date());
+  setType(t);$('add-modal').classList.remove('hidden');
+}
+function setType(t){
+  logType=t;
+  $('tg-food').className='flex-1 py-2 text-sm font-bold rounded-md '+(t==='food'?'bg-white shadow-sm text-blue-600':'text-gray-500');
+  $('tg-exercise').className='flex-1 py-2 text-sm font-bold rounded-md '+(t==='exercise'?'bg-white shadow-sm text-orange-600':'text-gray-500');
+  $('food-box').classList.toggle('hidden',t!=='food');$('ex-box').classList.toggle('hidden',t!=='exercise');
+  if(t==='exercise')exPreview();
+}
+function foodPreview(){
+  const v=$('food-sel').value;$('food-custom').classList.toggle('hidden',v!=='custom');
+  $('f-prev').textContent=v==='custom'?($('f-kcal').value||0):v===''?0:FOODS[v][1];
+}
+function exPreview(){
+  const v=$('ex-sel').value,cu=v==='custom';$('ex-custom').classList.toggle('hidden',!cu);
+  const met=cu?(parseFloat($('x-met').value)||0):EX[v][1],dur=parseInt($('ex-dur').value)||0,w=profiles[document.querySelector('input[name=who]:checked').value].currentWeight||65;
+  $('e-prev').textContent=Math.round(met*w*dur/60);
+}
+
+/* ---------- 이벤트 ---------- */
+$('food-sel').innerHTML='<option value="">음식을 선택하세요...</option>'+FOODS.map((f,i)=>`<option value="${i}">${f[0]} (${f[1]} kcal)</option>`).join('')+'<option value="custom">✍️ 직접 입력하기...</option>';
+$('ex-sel').innerHTML=EX.map((e,i)=>`<option value="${i}">${e[0]} (MET ${e[1]})</option>`).join('')+'<option value="custom">✍️ 직접 입력하기...</option>';
+document.addEventListener('click',e=>{
+  const d=e.target.closest('[data-d]');if(d){const [y,m,dd]=d.dataset.d.split('-').map(Number);sel=new Date(y,m-1,dd);$('l-date').value=d.dataset.d;renderCal();renderSel()}
+  const x=e.target.closest('[data-del]');if(x)deleteLog(x.dataset.del);
+  const c=e.target.closest('[data-ct]');if(c){chartType=c.dataset.ct;renderChart()}
+});
+$('profile-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const date=$('p-date').value,w=parseFloat($('p-w').value)||0,t=parseFloat($('p-t').value)||0,m=parseFloat($('p-m').value)||0,f=parseFloat($('p-f').value)||0;
+  const p=profiles[member],hist=[...(p.history||[])],i=hist.findIndex(h=>h.date===date),ent={date,weight:w,muscle:m,fat:f};
+  if(i>=0)hist[i]=ent;else hist.push(ent);
+  try{await saveProfileDoc(member,{...p,currentWeight:w,targetWeight:t,muscle:m,fat:f,history:hist,updatedAt:Date.now()});toast(`${date} 신체 정보가 저장되었습니다.`);closeModals()}
+  catch(err){console.error(err);toast('저장 실패 (편집 권한을 확인하세요)')}
+});
+$('log-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const who=document.querySelector('input[name=who]:checked').value,l={date:$('l-date').value,type:logType,member:who,timestamp:Date.now()};
+  if(logType==='food'){
+    const v=$('food-sel').value;if(v===''){toast('음식을 선택하세요.');return}
+    if(v==='custom'){l.name=$('f-name').value.trim();l.calories=parseInt($('f-kcal').value);if(!l.name||isNaN(l.calories)){toast('음식 이름과 칼로리를 입력하세요.');return}}
+    else{l.name=FOODS[v][0];l.calories=FOODS[v][1]}
+  }else{
+    const dur=parseInt($('ex-dur').value);if(isNaN(dur)||dur<=0){toast('운동 시간을 입력하세요.');return}
+    const v=$('ex-sel').value;let nmx,met;
+    if(v==='custom'){nmx=$('x-name').value.trim();met=parseFloat($('x-met').value);if(!nmx||!(met>0)){toast('운동 이름과 MET 값을 입력하세요.');return}}
+    else{nmx=EX[v][0].split(' /')[0];met=EX[v][1]}
+    l.name=nmx;l.duration=dur;l.calories=Math.round(met*(profiles[who].currentWeight||65)*dur/60);
+  }
+  try{await addLogDoc(l);toast('기록이 추가되었습니다.');closeModals();$('food-sel').value='';foodPreview()}
+  catch(err){console.error(err);toast('기록 추가 실패 (편집 권한을 확인하세요)')}
+});
+
+/* ---------- 시작 ---------- */
+lsLoad();setMember('husband');
+(async()=>{
+  try{db=await claude.use('db')}catch(e){db=null}
+  if(!db)return;
+  db.collection('profiles').onSnapshot(s=>{s.docs.forEach(d=>{profiles[d.id]={...profiles[d.id],...d.data()}});refreshAll()},e=>console.error(e));
+  db.collection('logs').onSnapshot(s=>{logs=s.docs.map(d=>({id:d.id,...d.data()}));refreshAll()},e=>console.error(e));
+})();
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+</body>
+</html>
