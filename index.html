@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#3b82f6">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script>window.cloudDb=new Promise(r=>{window._cr=r});</script>
 <title>우리 가족 다이어트 매니저</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -69,6 +70,7 @@ body{font-family:-apple-system,"Pretendard","Apple SD Gothic Neo","Malgun Gothic
         </div>
       </div>
       <div class="card"><h2 class="font-bold text-gray-700 mb-3">오늘의 상세 기록</h2><div id="today-logs" class="space-y-2"></div></div>
+      <p id="sync-info" class="text-center text-xs text-gray-400 pb-2"></p>
     </section>
 
     <section id="v-calendar" class="hidden space-y-4">
@@ -320,12 +322,40 @@ $('log-form').addEventListener('submit',async e=>{
 /* ---------- 시작 ---------- */
 lsLoad();setMember('husband');
 (async()=>{
-  try{db=await claude.use('db')}catch(e){db=null}
+  try{db=await window.cloudDb}catch(e){db=null}
   if(!db)return;
   db.collection('profiles').onSnapshot(s=>{s.docs.forEach(d=>{profiles[d.id]={...profiles[d.id],...d.data()}});refreshAll()},e=>console.error(e));
   db.collection('logs').onSnapshot(s=>{logs=s.docs.map(d=>({id:d.id,...d.data()}));refreshAll()},e=>console.error(e));
 })();
 </script>
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+<script type="module">
+const info=document.getElementById('sync-info');
+const norm=c=>(c||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+window.changeCode=()=>{const c=prompt('가족 코드를 입력하세요.\n부부가 같은 코드를 쓰면 기록이 공유돼요. (영문/숫자 6자 이상)',localStorage.getItem('family-code')||'');if(c===null)return;localStorage.setItem('family-code',norm(c));location.reload()};
+const localInfo=()=>{info.innerHTML='📱 이 기기에만 저장 중 · <button onclick="changeCode()" class="underline">가족 동기화 설정</button>'};
+(async()=>{
+  try{
+    const {firebaseConfig}=await import('./firebase-config.js');
+    if(!firebaseConfig||!firebaseConfig.apiKey||firebaseConfig.apiKey.includes('여기'))throw new Error('설정 전');
+    let code=norm(localStorage.getItem('family-code'));
+    if(code.length<6){
+      code=norm(prompt('가족 코드를 정해 주세요.\n남편·아내 휴대폰에 같은 코드를 입력하면 기록이 공유돼요.\n(영문/숫자 6자 이상, 남에게 알려주지 마세요)'));
+      if(code.length<6){localInfo();window._cr(null);return}
+      localStorage.setItem('family-code',code);
+    }
+    const V='11.6.1',B='https://www.gstatic.com/firebasejs/'+V+'/';
+    const [{initializeApp},{getAuth,signInAnonymously},{getFirestore,doc,setDoc,deleteDoc,collection,addDoc,onSnapshot}]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js'),import(B+'firebase-firestore.js')]);
+    const app=initializeApp(firebaseConfig);await signInAnonymously(getAuth(app));
+    const fs=getFirestore(app),base=['families',code],seg=p=>p.split('/');
+    window._cr({
+      doc:p=>({set:d=>setDoc(doc(fs,...base,...seg(p)),d),delete:()=>deleteDoc(doc(fs,...base,...seg(p)))}),
+      collection:p=>({add:d=>addDoc(collection(fs,...base,p),d),onSnapshot:(n,e)=>onSnapshot(collection(fs,...base,p),s=>n({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()}))}),e)})
+    });
+    info.innerHTML='☁️ 가족 코드 <b id="code-v"></b>로 동기화 중 · <button onclick="changeCode()" class="underline">변경</button>';
+    document.getElementById('code-v').textContent=code;
+  }catch(e){console.warn('동기화 사용 안 함:',e);localInfo();window._cr(null)}
+})();
+</script>
 </body>
 </html>
